@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Combined Parts Quiz — Project 6338</title>
+<style>
+  :root{
+    --blue:#0b66ff; --muted:#666; --success:#2d8a4a; --danger:#d64545; --card-bg:#fff;
+  }
+  body{font-family:Inter,system-ui,Arial,Segoe UI,Helvetica;margin:0;background:#f4f7fb;color:#111;}
+  header{background:linear-gradient(90deg,var(--blue),#1b8bff);color:#fff;padding:18px;}
+  .container{max-width:980px;margin:20px auto;padding:16px;}
+  .card{background:var(--card-bg);border-radius:10px;padding:18px;margin:14px 0;box-shadow:0 6px 24px rgba(20,30,80,0.06);}
+  h1{margin:0;font-size:20px;}
+  .lead{color:#eef5ff;margin-top:6px;font-size:13px;}
+  .section-title{font-weight:700;color:var(--blue);margin-bottom:10px;}
+  .img-wrap{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+  .component-image{width:260px;height:200px;border-radius:8px;background:#fff;border:1px solid #e6eefc;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .component-image img{max-width:100%;max-height:100%;object-fit:contain;}
+  .qblock{margin-bottom:12px;padding:12px;border-radius:8px;background:#fbfcff;border:1px solid #eef3ff;}
+  .label{font-weight:600;margin-bottom:6px;}
+  input[type="text"]{width:100%;padding:8px;border:1px solid #dfe7ff;border-radius:6px;}
+  .options{display:flex;flex-direction:column;gap:8px;margin-top:8px;}
+  .option{padding:10px;border-radius:8px;border:1px solid #e6eefc;background:white;cursor:pointer;}
+  .option input{margin-right:10px;}
+  .btn{background:var(--blue);color:white;padding:10px 14px;border-radius:8px;border:0;cursor:pointer;font-weight:700;}
+  .btn.ghost{background:#eef3ff;color:var(--blue);border:1px solid rgba(11,102,255,0.12);}
+  .status.correct{color:var(--success);font-weight:700;}
+  .status.wrong{color:var(--danger);font-weight:700;}
+  .results-list{margin-top:12px;}
+  .result-row{display:flex;justify-content:space-between;padding:8px;border-radius:6px;background:#fafafa;margin-bottom:6px;border:1px solid #f0f0f0;}
+  .img-choice-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  .img-choice{border-radius:8px;border:1px solid #e6eefc;padding:6px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:white;}
+  .img-choice img{max-width:100%;max-height:140px;object-fit:contain;}
+  .selected{outline:3px solid rgba(11,102,255,0.14);}
+  footer{font-size:13px;color:var(--muted);text-align:center;margin:18px 0;}
+  @media (max-width:700px){
+    .component-image{width:100%;height:180px;}
+    .img-choice-grid{grid-template-columns:1fr 1fr;}
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div style="max-width:980px;margin:0 auto;">
+      <h1>Parts Quiz — Project 6338</h1>
+      <div class="lead">Section 1: Image identification (10 Q). Section 2: Multiple choice (10 Q). Section 3: Part number → choose correct image (10 Q). Final combined score shown at end.</div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Section 1: Image identification -->
+    <section id="section1" class="card">
+      <div class="section-title">Section 1 — Image identification (10 questions)</div>
+      <div style="color:var(--muted);margin-bottom:10px;">Type the component name or part number. Answers are checked case-insensitive (spaces ignored).</div>
+
+      <div id="imageQuestions"></div>
+
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button id="checkImagesBtn" class="btn">Submit Section 1</button>
+        <button id="resetImagesBtn" class="btn ghost">Reset Section 1</button>
+      </div>
+
+      <div id="imageSectionResults" style="margin-top:12px;display:none;">
+        <div style="font-weight:700;margin-bottom:8px;">Section 1 Results</div>
+        <div id="imageResultsList" class="results-list"></div>
+        <div style="margin-top:8px;"><strong>Score (Section 1):</strong> <span id="scoreImage">0</span> / 10</div>
+      </div>
+    </section>
+
+    <!-- Section 2: MCQ -->
+    <section id="section2" class="card">
+      <div class="section-title">Section 2 — Multiple choice (10 questions)</div>
+      <div style="color:var(--muted);margin-bottom:10px;">Select one option per question. You can change answers before submitting.</div>
+
+      <div id="mcqQuestions"></div>
+
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button id="checkMcqBtn" class="btn">Submit Section 2</button>
+        <button id="resetMcqBtn" class="btn ghost">Reset Section 2</button>
+      </div>
+
+      <div id="mcqSectionResults" style="margin-top:12px;display:none;">
+        <div style="font-weight:700;margin-bottom:8px;">Section 2 Results</div>
+        <div id="mcqResultsList" class="results-list"></div>
+        <div style="margin-top:8px;"><strong>Score (Section 2):</strong> <span id="scoreMcq">0</span> / 10</div>
+      </div>
+    </section>
+
+    <!-- Section 3: Part number -> choose correct image -->
+    <section id="section3" class="card">
+      <div class="section-title">Section 3 — Part number → choose correct image (10 questions)</div>
+      <div style="color:var(--muted);margin-bottom:10px;">For each part number, click the image (A–D) that matches the part.</div>
+
+      <div id="imageChoiceQuestions"></div>
+
+      <div style="display:flex;gap:10px;margin-top:12px;">
+        <button id="checkImageChoiceBtn" class="btn">Submit Section 3</button>
+        <button id="resetImageChoiceBtn" class="btn ghost">Reset Section 3</button>
+      </div>
+
+      <div id="imageChoiceResults" style="margin-top:12px;display:none;">
+        <div style="font-weight:700;margin-bottom:8px;">Section 3 Results</div>
+        <div id="imageChoiceResultsList" class="results-list"></div>
+        <div style="margin-top:8px;"><strong>Score (Section 3):</strong> <span id="scoreImageChoice">0</span> / 10</div>
+      </div>
+    </section>
+
+    <!-- Final combined results -->
+    <section id="finalSection" class="card" style="display:none;">
+      <div class="section-title">Final Results</div>
+      <div><strong>Section 1:</strong> <span id="finalImageScore">0</span> / 10</div>
+      <div><strong>Section 2:</strong> <span id="finalMcqScore">0</span> / 10</div>
+      <div><strong>Section 3:</strong> <span id="finalImageChoiceScore">0</span> / 10</div>
+      <div style="margin-top:10px;font-size:18px;"><strong>Total Score:</strong> <span id="finalTotal">0</span> / 30</div>
+
+      <div style="margin-top:14px;">
+        <button id="restartAllBtn" class="btn">Restart Entire Quiz</button>
+      </div>
+
+      <div id="finalDetails" style="margin-top:12px;"></div>
+    </section>
+
+    <footer>
+      Images are loaded from: <br>
+      <code>file:///C:/Users/Advanced%20Mechanix/Desktop/PART%20LIST%20PICTURE/</code><br>
+      Make sure your image filenames match those used below.
+    </footer>
+  </main>
+
+<script>
+/* BASE PATH - make sure this matches your confirmed path (spaces encoded as %20) */
+const BASE_PATH = "images/";
+
+/* -------- SECTION 1 (image ID) --------
+   10 image questions. acceptedAnswers: array of strings used to check name/part.
+*/
+const IMAGE_QUESTIONS = [
+  { id: 1, part: "SEL-751 (Feeder Protection Relay)", filename: "SEL751.jpg",
+    acceptedAnswers: ["sel751","sel-751","sel 751","751"] },
+  { id: 2, part: "5SY62257CC (MCB F1)", filename: "5SY62257CC.jpg",
+    acceptedAnswers: ["5sy62257cc","5sy62257","5sy62257 cc","5sy62257c"] },
+  { id: 3, part: "5SY43037CC (MCB F5)", filename: "5SY43037CC.jpg",
+    acceptedAnswers: ["5sy43037cc","5sy43037","5sy43037 cc"] },
+  { id: 4, part: "XB4BS8444 (Emergency Stop - Harmony XB4)", filename: "XB4BS8444.jpg",
+    acceptedAnswers: ["xb4bs8444","xb4 bs8444","xb4","xb4bs"] },
+  { id: 5, part: "D7P-LF3PN3GX10 (Green Indicator)", filename: "D7P-LF3PN3GX10.jpeg",
+    acceptedAnswers: ["d7p-lf3pn3gx10","d7plf3pn3gx10","d7plf3"] },
+  { id: 6, part: "D7P-P0PN3AX7 (Amber Indicator)", filename: "D7P-P0PN3AX7.png",
+    acceptedAnswers: ["d7p-p0pn3ax7","d7pp0pn3","d7p p0pn3"] },
+  { id: 7, part: "D7PP4PN3RXD7 (Red Indicator)", filename: "D7PP4PN3RXD7.jpeg",
+    acceptedAnswers: ["d7pp4pn3rxd7","d7pp4pn3","d7pp4"] },
+  { id: 8, part: "D7P-SB32 (Selector Switch)", filename: "D7P-SB32.jpeg",
+    acceptedAnswers: ["d7p-sb32","d7psb32","sb32","d7p sb32"] },
+  { id: 9, part: "3RH2122-1BB40 (Contactor K1)", filename: "3RH2122-1BB40.jpg",
+    acceptedAnswers: ["3rh2122-1bb40","3rh2122","3rh2122 1bb40"] },
+  { id:10, part: "3RH2131-1BB40 (Contactor KBE)", filename: "3RH2131-1BB40.jpg",
+    acceptedAnswers: ["3rh2131-1bb40","3rh2131","3rh2131 1bb40"] }
+];
+
+/* -------- SECTION 2 (MCQ) -------- */
+const MCQ_QUESTIONS = [
+  { id:11, q:"What is the coil voltage rating for contactor relay K1 (3RH2122-1BB40)?",
+    choices:["110V AC","240V AC","24V DC","48V DC"], correctIndex:2 },
+  { id:12, q:"What are the coil terminals labeled on Siemens SIRIUS contactor relays?",
+    choices:["X1 and X2","A1 and A2","L1 and L2","+ and -"], correctIndex:1 },
+  { id:13, q:"What is the primary function of the SEL-751 Feeder Protection Relay?",
+    choices:["Power metering only","Detect faults like short circuits and overloads","Temperature monitoring","Voltage regulation"], correctIndex:1 },
+  { id:14, q:"What does 'C' curve type mean for MCBs?",
+    choices:["Commercial grade protection","Current limiting feature","General applications (5-10× In trip range)","Calibrated for capacitive loads"], correctIndex:2 },
+  { id:15, q:"What is the mounting diameter for selector switches and indicators?",
+    choices:["16 mm","22 mm (or 22.5 mm)","30 mm","40 mm"], correctIndex:1 },
+  { id:16, q:"What type of contact does the Emergency Stop button normally have?",
+    choices:["Normally Open (NO)","Normally Closed (NC)","Changeover (CO)","Latching type"], correctIndex:1 },
+  { id:17, q:"How many positions does the selector switch D7P-SB32 have?",
+    choices:["2 positions","3 positions","4 positions","Variable positions"], correctIndex:1 },
+  { id:18, q:"What is the contact configuration of K1 contactor relay (3RH2122)?",
+    choices:["2NO + 2NC (Total 4 poles)","3NO + 1NC (Total 4 poles)","4NO + 0NC (Total 4 poles)","1NO + 3NC (Total 4 poles)"], correctIndex:0 },
+  { id:19, q:"What is the typical application of the Local/Remote selector switch?",
+    choices:["Selecting voltage levels","Local push-button vs remote PLC operation","Emergency shutdown","Phase selection"], correctIndex:1 },
+  { id:20, q:"What is the breaking capacity of MCB F1 (5SY62257CC)?",
+    choices:["3 kA","6 kA","10 kA","16 kA"], correctIndex:1 }
+];
+
+/* -------- SECTION 3 (part number -> 4 image choices) --------
+   10 questions: names q1-1.jpg ... q10-4.jpg stored in same folder.
+   correctIndex is 0..3 (A..D)
+*/
+const IMAGE_CHOICE_QUESTIONS = [
+  { id:21, part: "5SY62257CC", choices:["5SY62257CC.jpg","5SY43037CC.jpg","5ST3010.jpg","XB4BS8444.jpg"], correctIndex:0 },
+  { id:22, part: "5ST3010",    choices:["5SY62257CC.jpg","5ST3010.jpg","XB4BS8444.jpg","D7PP4PN3RXD7.jpeg"], correctIndex:1 },
+  { id:23, part: "5SY43037CC", choices:["5ST3010.jpg","D7P-LF3PN3GX10.jpeg","5SY43037CC.jpg","D7PP4PN3RXD7.jpeg"], correctIndex:2 },
+  { id:24, part: "XB4BS8444",  choices:["XB4BS8444.jpg","D7PP4PN3RXD7.jpeg","3RH2122-1BB40.jpg","3RH2131-1BB40.jpg"], correctIndex:0 },
+  { id:25, part: "D7P-LF3PN3GX10", choices:["D7P-LF3PN3GX10.jpeg","D7P-P0PN3AX7.png","5SY62257CC.jpg","D7P-P0PN3AX7.png"], correctIndex:0 },
+  { id:26, part: "D7P-P0PN3AX7", choices:["D7P-SB32.jpeg","D7P-LF3PN3GX10.jpeg","D7P-P0PN3AX7.png","D7PP4PN3RXD7.jpeg"], correctIndex:2 },
+  { id:27, part: "D7PP4PN3RXD7", choices:["3RH2131-1BB40.jpg","3RH2131-1BB40.jpg","D7P-P0PN3AX7.png","D7PP4PN3RXD7.jpeg"], correctIndex:3 },
+  { id:28, part: "D7P-SB32",    choices:["D7P-P0PN3AX7.png","D7P-SB32.jpeg","D7P-LF3PN3GX10.jpeg","3RH2131-1BB40.jpg"], correctIndex:1 },
+  { id:29, part: "3RH2122-1BB40", choices:["3RH2122-1BB40.jpg","D7P-SB32.jpeg","3RH2131-1BB40.jpg","D7P-P0PN3AX7.png"], correctIndex:0 },
+  { id:30, part: "3RH2131-1BB40", choices:["5SY62257CC.jpg","3RH2122-1BB40.jpg","3RH2131-1BB40.jpg","XB4BS8444.jpg"], correctIndex:2 }
+];
+
+/* ---------- RENDERING ---------- */
+const imageQuestionsContainer = document.getElementById('imageQuestions');
+const mcqQuestionsContainer = document.getElementById('mcqQuestions');
+const imageChoiceContainer = document.getElementById('imageChoiceQuestions');
+
+function createImageQuestionBlock(q){
+  const block = document.createElement('div');
+  block.className = 'qblock';
+  block.id = `imgq-${q.id}`;
+
+  const title = document.createElement('div');
+  title.className = 'label';
+  title.textContent = `Q${q.id}: ${q.part}`;
+  block.appendChild(title);
+
+  const wrap = document.createElement('div');
+  wrap.className = 'img-wrap';
+
+  const imgbox = document.createElement('div');
+  imgbox.className = 'component-image';
+  const img = document.createElement('img');
+  img.src = BASE_PATH + q.filename;
+  img.alt = q.part;
+  img.onerror = () => { imgbox.textContent = "Image not found"; img.style.display='none'; imgbox.style.color='#666'; imgbox.style.fontSize='14px'; }
+  imgbox.appendChild(img);
+  wrap.appendChild(imgbox);
+
+  const fields = document.createElement('div');
+  fields.style.flex='1';
+  fields.innerHTML = `
+    <div style="margin-bottom:8px;"><strong>Type your answers below:</strong></div>
+    <div style="margin-bottom:6px;"><small>Component name / model</small><br>
+      <input type="text" id="img-${q.id}-name" placeholder="e.g., SEL-751 or Feeder Protection Relay"></div>
+    <div style="margin-bottom:6px;"><small>Part number (if known)</small><br>
+      <input type="text" id="img-${q.id}-part" placeholder="e.g., SEL751 or 5SY62257CC"></div>
+    <div style="margin-bottom:6px;"><small>Primary function (short)</small><br>
+      <input type="text" id="img-${q.id}-func" placeholder="e.g., Feeder protection"></div>
+  `;
+  wrap.appendChild(fields);
+  block.appendChild(wrap);
+  return block;
+}
+
+function createMcqBlock(q){
+  const block = document.createElement('div');
+  block.className = 'qblock';
+  block.id = `mcq-${q.id}`;
+  const title = document.createElement('div');
+  title.className = 'label';
+  title.textContent = `Q${q.id}:`;
+  block.appendChild(title);
+  const text = document.createElement('div');
+  text.style.marginBottom='8px';
+  text.textContent = q.q;
+  block.appendChild(text);
+
+  const opts = document.createElement('div');
+  opts.className='options';
+  q.choices.forEach((c, i) => {
+    const label = document.createElement('label');
+    label.className='option';
+    label.innerHTML = `<input type="radio" name="mcq-${q.id}" value="${i}"> ${String.fromCharCode(65+i)}) ${c}`;
+    opts.appendChild(label);
+  });
+  block.appendChild(opts);
+  return block;
+}
+
+function createImageChoiceBlock(q, idx){
+  const block = document.createElement('div');
+  block.className = 'qblock';
+  block.id = `choiceq-${q.id}`;
+  const title = document.createElement('div');
+  title.className = 'label';
+  title.textContent = `Q${idx+1}: Identify part ${q.part}`;
+  block.appendChild(title);
+
+  const gridWrap = document.createElement('div');
+  gridWrap.className = 'img-choice-grid';
+  // create 4 image choices
+  q.choices.forEach((fname, i) => {
+    const div = document.createElement('div');
+    div.className = 'img-choice';
+    div.dataset.qid = q.id;
+    div.dataset.choiceIndex = i;
+    const img = document.createElement('img');
+    img.src = BASE_PATH + fname;
+    img.alt = `Option ${String.fromCharCode(65+i)}`;
+    img.onerror = () => { div.textContent = `Image ${i+1} not found`; img.style.display='none'; div.style.color='#666'; }
+    div.appendChild(img);
+    // click handler
+    div.addEventListener('click', ()=> {
+      // mark selection visually, store selection
+      const siblings = block.querySelectorAll('.img-choice');
+      siblings.forEach(s => s.classList.remove('selected'));
+      div.classList.add('selected');
+      // store selection
+      window._section3_answers = window._section3_answers || {};
+      window._section3_answers[q.id] = i;
+    });
+    gridWrap.appendChild(div);
+  });
+  block.appendChild(gridWrap);
+  return block;
+}
+
+/* populate UI */
+IMAGE_QUESTIONS.forEach(q => imageQuestionsContainer.appendChild(createImageQuestionBlock(q)));
+MCQ_QUESTIONS.forEach(q => mcqQuestionsContainer.appendChild(createMcqBlock(q)));
+IMAGE_CHOICE_QUESTIONS.forEach((q, idx) => imageChoiceContainer.appendChild(createImageChoiceBlock(q, idx)));
+
+/* ---------- CHECK / SCORE HANDLERS ---------- */
+
+function normalizeAnswer(s){
+  if(!s) return "";
+  return s.toString().trim().toLowerCase().replace(/\s+/g,'');
+}
+
+/* Section 1 submit */
+document.getElementById('checkImagesBtn').addEventListener('click', ()=> {
+  const resultsDiv = document.getElementById('imageResultsList');
+  resultsDiv.innerHTML = '';
+  let score = 0;
+  IMAGE_QUESTIONS.forEach(q=>{
+    const nameInput = document.getElementById(`img-${q.id}-name`).value;
+    const partInput = document.getElementById(`img-${q.id}-part`).value;
+    const funcInput = document.getElementById(`img-${q.id}-func`).value;
+    const nameNorm = normalizeAnswer(nameInput);
+    const partNorm = normalizeAnswer(partInput);
+    // Decide correctness: if either part or name matches any acceptedAnswers => correct
+    let correct = false;
+    for(const acc of q.acceptedAnswers){
+      const accNorm = acc.toString().toLowerCase().replace(/\s+/g,'');
+      if(partNorm && partNorm === accNorm){ correct = true; break; }
+      if(nameNorm && nameNorm.includes(accNorm)){ correct = true; break; }
+    }
+    const row = document.createElement('div');
+    row.className='result-row';
+    const left = document.createElement('div');
+    left.innerHTML = `<strong>Q${q.id}</strong> — ${q.part}`;
+    const right = document.createElement('div');
+    if(correct){
+      right.innerHTML = `<span style="color:${getComputedStyle(document.documentElement).getPropertyValue('--success')||'#2d8a4a'};font-weight:700">Correct</span>`; score++;
+    } else {
+      right.innerHTML = `<span style="color:${getComputedStyle(document.documentElement).getPropertyValue('--danger')||'#d64545'};font-weight:700">Wrong</span>`;
+    }
+    row.appendChild(left); row.appendChild(right);
+    resultsDiv.appendChild(row);
+  });
+  document.getElementById('imageSectionResults').style.display='block';
+  document.getElementById('scoreImage').textContent = score;
+  window._section1_score = score;
+  maybeShowFinal();
+});
+
+/* Section 1 reset */
+document.getElementById('resetImagesBtn').addEventListener('click', ()=> {
+  IMAGE_QUESTIONS.forEach(q=>{
+    document.getElementById(`img-${q.id}-name`).value='';
+    document.getElementById(`img-${q.id}-part`).value='';
+    document.getElementById(`img-${q.id}-func`).value='';
+  });
+  document.getElementById('imageSectionResults').style.display='none';
+  document.getElementById('scoreImage').textContent = '0';
+  window._section1_score = null;
+  maybeHideFinal();
+});
+
+/* Section 2 submit */
+document.getElementById('checkMcqBtn').addEventListener('click', ()=> {
+  const resultsDiv = document.getElementById('mcqResultsList');
+  resultsDiv.innerHTML = '';
+  let score = 0;
+  MCQ_QUESTIONS.forEach(q=>{
+    const radios = document.getElementsByName(`mcq-${q.id}`);
+    let selected = null;
+    for(const r of radios){ if(r.checked){ selected = Number(r.value); break; } }
+    const row = document.createElement('div');
+    row.className='result-row';
+    const left = document.createElement('div');
+    left.innerHTML = `<strong>Q${q.id}</strong> — ${q.q}`;
+    const right = document.createElement('div');
+    if(selected === null){
+      right.innerHTML = `<span style="color:${getComputedStyle(document.documentElement).getPropertyValue('--muted')||'#666'}">No answer</span>`;
+    } else if(selected === q.correctIndex){
+      right.innerHTML = `<span style="color:${getComputedStyle(document.documentElement).getPropertyValue('--success')||'#2d8a4a'};font-weight:700">Correct</span>`; score++;
+    } else {
+      right.innerHTML = `<span style="color:${getComputedStyle(document.documentElement).getPropertyValue('--danger')||'#d64545'};font-weight:700">Wrong</span> — Correct: ${String.fromCharCode(65+q.correctIndex)}`;
+    }
+    row.appendChild(left); row.appendChild(right);
+    resultsDiv.appendChild(row);
+  });
+  document.getElementById('mcqSectionResults').style.display='block';
+  document.getElementById('scoreMcq').textContent = score;
+  window._section2_score = score;
+  maybeShowFinal();
+});
+
+/* Section 2 reset */
+document.getElementById('resetMcqBtn').addEventListener('click', ()=> {
+  MCQ_QUESTIONS.forEach(q=>{
+    const radios = document.getElementsByName(`mcq-${q.id}`);
+    radios.forEach(r=> r.checked = false);
+  });
+  document.getElementById('mcqSectionResults').style.display='none';
+  document.getElementById('scoreMcq').textContent = '0';
+  window._section2_score = null;
+  maybeHideFinal();
+});
+
+/* Section 3 submit */
+document.getElementById('checkImageChoiceBtn').addEventListener('click', ()=> {
+  const resultsDiv = document.getElementById('imageChoiceResultsList');
+  resultsDiv.innerHTML = '';
+  let score = 0;
+  window._section3_answers = window._section3_answers || {};
+  IMAGE_CHOICE_QUESTIONS.forEach((q, idx) => {
+    const selected = window._section3_answers[q.id];
+    const row = document.createElement('div');
+    row.className = 'result-row';
+    const left = document.createElement('div');
+    left.innerHTML = `<strong>Q${idx+1}</strong> — ${q.part}`;
+    const right = document.createElement('div');
+    if(selected === undefined || selected === null){
+      right.innerHTML = `<span style="color:${getComputedStyle(document.documentElement).getPropertyValue('--muted')||'#666'}">No answer</span>`;
+    } else if(selected === q.correctIndex){
+      right.innerHTML = `<span style="color:${getComputedStyle(document.documentElement).getPropertyValue('--success')||'#2d8a4a'};font-weight:700">Correct</span>`; score++;
+    } else {
+      right.innerHTML = `<span style="color:${getComputedStyle(document.documentElement).getPropertyValue('--danger')||'#d64545'};font-weight:700">Wrong</span> — Correct: ${String.fromCharCode(65+q.correctIndex)}`;
+    }
+    row.appendChild(left); row.appendChild(right);
+    resultsDiv.appendChild(row);
+  });
+  document.getElementById('imageChoiceResults').style.display = 'block';
+  document.getElementById('scoreImageChoice').textContent = score;
+  window._section3_score = score;
+  maybeShowFinal();
+});
+
+/* Section 3 reset */
+document.getElementById('resetImageChoiceBtn').addEventListener('click', ()=> {
+  // remove selected classes and answers
+  IMAGE_CHOICE_QUESTIONS.forEach(q=>{
+    const block = document.getElementById(`choiceq-${q.id}`);
+    if(block){
+      const choices = block.querySelectorAll('.img-choice');
+      choices.forEach(c => c.classList.remove('selected'));
+    }
+  });
+  window._section3_answers = {};
+  document.getElementById('imageChoiceResults').style.display = 'none';
+  document.getElementById('scoreImageChoice').textContent = '0';
+  window._section3_score = null;
+  maybeHideFinal();
+});
+
+/* Final combine and display */
+function maybeShowFinal(){
+  const s1 = (window._section1_score !== undefined) ? window._section1_score : null;
+  const s2 = (window._section2_score !== undefined) ? window._section2_score : null;
+  const s3 = (window._section3_score !== undefined) ? window._section3_score : null;
+  // show final only when all three sections have been submitted (non-null)
+  if(s1 !== null && s2 !== null && s3 !== null){
+    document.getElementById('finalSection').style.display = 'block';
+    document.getElementById('finalImageScore').textContent = s1;
+    document.getElementById('finalMcqScore').textContent = s2;
+    document.getElementById('finalImageChoiceScore').textContent = s3;
+    const total = Number(s1) + Number(s2) + Number(s3);
+    document.getElementById('finalTotal').textContent = total;
+    const finalDetails = document.getElementById('finalDetails');
+    finalDetails.innerHTML = `<div style="margin-top:10px;"><strong>Summary:</strong> ${s1} / ${IMAGE_QUESTIONS.length} (images) + ${s2} / ${MCQ_QUESTIONS.length} (MCQ) + ${s3} / ${IMAGE_CHOICE_QUESTIONS.length} (image choice) = <strong>${total} / ${IMAGE_QUESTIONS.length + MCQ_QUESTIONS.length + IMAGE_CHOICE_QUESTIONS.length}</strong></div>`;
+  }
+}
+
+/* Hide final if any section reset or not submitted */
+function maybeHideFinal(){
+  const s1 = window._section1_score ?? null;
+  const s2 = window._section2_score ?? null;
+  const s3 = window._section3_score ?? null;
+  if(s1 === null || s2 === null || s3 === null){
+    document.getElementById('finalSection').style.display = 'none';
+    document.getElementById('finalDetails').innerHTML = '';
+  }
+}
+
+/* Restart entire quiz */
+document.getElementById('restartAllBtn').addEventListener('click', ()=>{
+  document.getElementById('resetImagesBtn').click();
+  document.getElementById('resetMcqBtn').click();
+  document.getElementById('resetImageChoiceBtn').click();
+  window._section1_score = null;
+  window._section2_score = null;
+  window._section3_score = null;
+  // hide final
+  document.getElementById('finalSection').style.display='none';
+});
+
+/* initialize window score holders */
+window._section1_score = null;
+window._section2_score = null;
+window._section3_score = null;
+window._section3_answers = {};
+
+/* End of script */
+</script>
+</body>
+</html>
